@@ -1,0 +1,21 @@
+{
+  "projectName": "MyProject",
+  "outputDir": "..",
+  "enableTests": false,
+  "cStandard": "11",
+  "cppStandard": "17",
+  "libraries": [
+    {
+      "name": "foo",
+      "sources": ["foo.c"],
+      "headers": ["foo.h"]
+    }
+  ],
+  "executables": [
+    {
+      "name": "main",
+      "sources": ["main.c"],
+      "dependencies": ["foo"]
+    }
+  ]
+}

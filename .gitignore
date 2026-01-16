@@ -1,0 +1,45 @@
+# Generated projects
+MyProject/
+*/MyProject/
+
+# Build directories
+build/
+*/build/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# CMake files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+Testing/
+
+# Ninja files
+.ninja_deps
+.ninja_log
+
+# Compiled binaries
+*.exe
+*.out
+*.app
+*.so
+*.dylib
+*.dll
+
+# Log files
+*.log
