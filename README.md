@@ -37,11 +37,13 @@ A modern, flexible project generator for C/C++ projects using CMake and Ninja bu
    ./create_project.sh
    ```
 
-4. **Build the generated project:**
+4. **Build and test the generated project:**
    ```bash
    cd ../MyProject
    cmake -B build -G Ninja
    cmake --build build
+   cd build
+   ctest
    ```
 
 ## Configuration
@@ -53,6 +55,7 @@ Edit `project_template.json` to customize your project:
   "projectName": "MyProject",
   "outputDir": "..",
   "enableTests": true,
+  "testFramework": "simple",
   "cStandard": "11",
   "cppStandard": "17",
   "libraries": [
@@ -76,7 +79,8 @@ Edit `project_template.json` to customize your project:
 
 - **projectName**: Name of the generated project
 - **outputDir**: Directory where project will be created (relative to script location)
-- **enableTests**: Whether to include Google Test framework (`true`/`false`)
+- **enableTests**: Whether to include testing framework (`true`/`false`)
+- **testFramework**: Test framework to use (`"simple"` for basic CTest or `"gtest"` for Google Test)
 - **cStandard**: C standard version (11, 99, etc.)
 - **cppStandard**: C++ standard version (17, 14, 11, etc.)
 - **libraries**: Array of library definitions
@@ -89,24 +93,79 @@ The generator supports standard CMake build types:
 ```bash
 # Debug build (with debug symbols)
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+cmake --build build
 
 # Release build (optimized)
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+
+# Run tests (from build directory)
+cd build && ctest
 ```
 
 ## Testing
 
-When `enableTests` is true, projects include Google Test integration:
+> **Important:** Set `"enableTests": true` in your config to generate tests. Run `ctest` from the **build/** directory.
 
+The generator supports two testing approaches:
+
+### 1. Simple CTest (Lightweight)
+
+Set `"testFramework": "simple"` for basic testing without external dependencies:
+
+```json
+{
+  "enableTests": true,
+  "testFramework": "simple"
+}
+```
+
+**Workflow:**
 ```bash
-# Build and run tests
+# Create and navigate to your project
+cd MyProject
+
+# Configure with CMake and build
+cmake -B build -G Ninja
 cmake --build build
+
+# Run tests with CTest (must be in build directory)
 cd build
 ctest
 
 # Or run tests directly
 ./tests/run_tests
 ```
+
+Simple tests use basic C assertions and return 0 for success, non-zero for failure. The test executable reports "All tests passed" for CTest integration.
+
+### 2. Google Test (Full-Featured)
+
+Set `"testFramework": "gtest"` for comprehensive testing with Google Test:
+
+```json
+{
+  "enableTests": true,
+  "testFramework": "gtest"
+}
+```
+
+**Workflow:**
+```bash
+# Build and run tests
+cd MyProject
+cmake -B build -G Ninja
+cmake --build build
+
+# Run tests with CTest (must be in build directory)
+cd build
+ctest --verbose
+
+# Or run tests directly
+./tests/run_tests
+```
+
+Google Test automatically downloads during build and provides rich assertion macros, test fixtures, and detailed failure reports.
 
 ## Generated Project Structure
 

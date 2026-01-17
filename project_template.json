@@ -1,7 +1,8 @@
 {
   "projectName": "MyProject",
   "outputDir": "..",
-  "enableTests": false,
+  "enableTests": true,
+  "testFramework": "simple",
   "cStandard": "11",
   "cppStandard": "17",
   "libraries": [

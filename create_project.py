@@ -63,6 +63,48 @@ add_subdirectory(tests)
 """
     return content
 
+def create_tests_cmakelists(config):
+    test_framework = config.get("testFramework", "simple")
+    
+    if test_framework == "gtest":
+        content = f"""# Add GTest
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
+# Create the test executable
+add_executable(run_tests test_{config['libraries'][0]['name']}.cpp)
+
+# Link against GTest and the library to be tested
+target_link_libraries(run_tests PRIVATE GTest::gtest_main {" ".join([lib['name'] for lib in config['libraries']])})
+
+# Discover and add tests to CTest
+include(GoogleTest)
+gtest_discover_tests(run_tests)
+"""
+    else:  # simple
+        content = f"""# Test executables
+add_executable(run_tests test_{config['libraries'][0]['name']}.c)
+
+# Link with libraries
+target_link_libraries(run_tests PRIVATE {" ".join([lib['name'] for lib in config['libraries']])})
+
+# Add test to CTest
+add_test(NAME run_tests COMMAND run_tests)
+
+# Optional: Set test properties
+set_tests_properties(run_tests PROPERTIES
+    TIMEOUT 10
+    PASS_REGULAR_EXPRESSION "All tests passed"
+)
+"""
+    return content
+
 def create_lib_cmakelists(lib_config):
     lib_name = lib_config["name"]
     sources = " ".join(lib_config["sources"])
@@ -135,39 +177,50 @@ def main():
     if config.get("enableTests", False):
         tests_dir = root / "tests"
         tests_dir.mkdir()
-        (tests_dir / "CMakeLists.txt").write_text(f"""# Add GTest
-                                                  
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+        (tests_dir / "CMakeLists.txt").write_text(create_tests_cmakelists(config))
+        
+        test_framework = config.get("testFramework", "simple")
+        lib_name = config['libraries'][0]['name'] if config['libraries'] else "example"
+        
+        if test_framework == "gtest":
+            (tests_dir / f"test_{lib_name}.cpp").write_text(f"""#include <gtest/gtest.h>
+#include "{lib_name}.h"
 
-# Create the test executable
-add_executable(run_tests test_foo.cpp)
-
-# Link against GTest and the library to be tested
-target_link_libraries(run_tests PRIVATE GTest::gtest_main foo)
-
-# Discover and add tests to CTest
-include(GoogleTest)
-gtest_discover_tests(run_tests)
-""")
-        (tests_dir / "test_foo.cpp").write_text("""#include <gtest/gtest.h>
-#include "foo.h"
-
-TEST(FooTest, BasicTest) {
+TEST({lib_name.capitalize()}Test, BasicTest) {{
     // A simple test to ensure the function can be called
-    foo_hello();
+    {lib_name}_hello();
     SUCCEED();
-}
+}}
 
-TEST(FooTest, AlwaysPasses) {
+TEST({lib_name.capitalize()}Test, AlwaysPasses) {{
     EXPECT_TRUE(true);
-}
+}}
+""")
+        else:  # simple
+            (tests_dir / f"test_{lib_name}.c").write_text(f"""#include <stdio.h>
+#include "{lib_name}.h"
+
+int test_{lib_name}_hello() {{
+    printf("Testing {lib_name}_hello()...\\n");
+    {lib_name}_hello();
+    printf("  PASSED\\n");
+    return 0;
+}}
+
+int main(void) {{
+    int failures = 0;
+    
+    printf("Running tests...\\n");
+    failures += test_{lib_name}_hello();
+    
+    if (failures == 0) {{
+        printf("\\nAll tests passed\\n");
+        return 0;
+    }} else {{
+        printf("\\n%d test(s) failed\\n", failures);
+        return 1;
+    }}
+}}
 """)
 
     print(f"Project '{project_name}' created successfully in '{root}'.")
