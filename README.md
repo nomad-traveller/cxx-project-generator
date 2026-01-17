@@ -24,7 +24,7 @@ A modern, flexible project generator for C/C++ projects using CMake and Ninja bu
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/nomad-traveller/cpp-project-generator.git
-   cd cpp-project-generator
+   cd cxx-project-generator
    ```
 
 2. **Make the script executable:**
